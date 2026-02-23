@@ -62,42 +62,33 @@ class PostService: ObservableObject {
 
     /// Posts from joined groups OR from followed users, sorted by time desc.
     func fetchFeed(joinedGroupIds: [String], followingUserIds: [String], limit: Int = 50) async throws -> [Post] {
-        var allPosts: [Post] = []
+        let snapshot = try await postsCollection
+            .order(by: "timestamp", descending: true)
+            .limit(to: limit)
+            .getDocuments()
 
-        // Source 1: posts from joined groups
-        if !joinedGroupIds.isEmpty {
-            let groupSnapshot = try await postsCollection
-                .whereField("groupCategory", in: joinedGroupIds.map { $0.capitalized })
-                .order(by: "timestamp", descending: true)
-                .limit(to: limit)
-                .getDocuments()
-            allPosts.append(contentsOf: groupSnapshot.documents.compactMap { postFromDocument($0) })
+        let allPosts = snapshot.documents.compactMap { postFromDocument($0) }
+
+        let joinedSet = Set(joinedGroupIds.map { $0.lowercased() })
+        let followingSet = Set(followingUserIds)
+
+        let filtered = allPosts.filter { post in
+            joinedSet.contains(post.groupCategory.lowercased()) ||
+            followingSet.contains(post.authorId)
         }
 
-        // Source 2: posts from followed users (may overlap)
-        if !followingUserIds.isEmpty {
-            let userSnapshot = try await postsCollection
-                .whereField("authorId", in: followingUserIds)
-                .order(by: "timestamp", descending: true)
-                .limit(to: limit)
-                .getDocuments()
-            allPosts.append(contentsOf: userSnapshot.documents.compactMap { postFromDocument($0) })
-        }
-
-        // Deduplicate by id and sort
-        var seen = Set<String>()
-        let unique = allPosts.filter { seen.insert($0.id).inserted }
-        return unique.sorted { $0.timestamp > $1.timestamp }
+        return filtered
     }
 
     /// Posts for a single group category.
     func fetchGroupPosts(groupCategory: String, limit: Int = 50) async throws -> [Post] {
         let snapshot = try await postsCollection
             .whereField("groupCategory", isEqualTo: groupCategory)
-            .order(by: "timestamp", descending: true)
-            .limit(to: limit)
             .getDocuments()
-        return snapshot.documents.compactMap { postFromDocument($0) }
+
+        return snapshot.documents
+            .compactMap { postFromDocument($0) }
+            .sorted { $0.timestamp > $1.timestamp }
     }
 
     // MARK: - Like / Unlike

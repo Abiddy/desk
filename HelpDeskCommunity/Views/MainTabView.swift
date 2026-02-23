@@ -17,8 +17,8 @@ struct MainTabView: View {
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)
             
-            ExploreView()
-                .tabItem { Label("Explore", systemImage: "magnifyingglass") }
+            DecksListView()
+                .tabItem { Label("Decks", systemImage: "rectangle.stack.fill") }
                 .tag(1)
             
             ChatsView()
@@ -39,38 +39,15 @@ struct HomeView: View {
     @EnvironmentObject var joinedGroupsStore: JoinedGroupsStore
     @EnvironmentObject var feedViewModel: FeedViewModel
     @EnvironmentObject var followService: FollowService
-    @State private var selectedGroupFilter: String? = nil
     @State private var showCreatePost = false
     @State private var navigateToGroup: String? = nil
 
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 0) {
-                // Horizontal group chips
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(GroupCategory.allCases, id: \.rawValue) { category in
-                            GroupChipView(
-                                title: category.rawValue,
-                                isSelected: selectedGroupFilter == category.rawValue,
-                                isJoined: joinedGroupsStore.isJoined(category.rawValue)
-                            ) {
-                                if selectedGroupFilter == category.rawValue {
-                                    selectedGroupFilter = nil
-                                } else {
-                                    selectedGroupFilter = category.rawValue
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 12)
-                }
-                .background(Color(.systemGray6))
-
                 // Feed
                 ScrollView {
-                    let displayPosts = feedViewModel.filteredPosts(for: selectedGroupFilter)
+                    let displayPosts = feedViewModel.posts
 
                     if feedViewModel.isLoading {
                         ProgressView()
@@ -123,8 +100,13 @@ struct HomeView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink(destination: GroupSelectionSettingsView()) {
-                        Image(systemName: "gearshape.fill")
-                            .foregroundColor(.primary)
+                        HStack(spacing: 4) {
+                            Text("Groups")
+                                .fontWeight(.medium)
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                        }
+                        .foregroundColor(.purple)
                     }
                 }
             }
@@ -145,31 +127,7 @@ struct HomeView: View {
     }
 }
 
-// Chip for one group in the horizontal row
-struct GroupChipView: View {
-    let title: String
-    let isSelected: Bool
-    let isJoined: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? Color.purple : Color(.systemGray5))
-                )
-                .foregroundColor(isSelected ? .white : .primary)
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// Settings: select which groups you're in (opened from gear)
+// Settings: select which groups you're in
 struct GroupSelectionSettingsView: View {
     @EnvironmentObject var joinedGroupsStore: JoinedGroupsStore
     @Environment(\.dismiss) private var dismiss
