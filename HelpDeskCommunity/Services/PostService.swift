@@ -1,6 +1,6 @@
 //
 //  PostService.swift
-//  HelpDeskCommunity
+//  Helpdecks
 //
 
 import Foundation
@@ -15,8 +15,8 @@ class PostService: ObservableObject {
     // MARK: - Create
 
     func createPost(
-        groupId: String,
-        groupCategory: String,
+        circleId: String,
+        circleName: String,
         title: String,
         body: String,
         imageURL: String? = nil
@@ -28,8 +28,8 @@ class PostService: ObservableObject {
         let userPic = userDoc.data()?["profilePictureURL"] as? String
 
         let post = Post(
-            groupId: groupId,
-            groupCategory: groupCategory,
+            circleId: circleId,
+            circleName: circleName,
             authorId: user.uid,
             authorName: userName,
             authorProfilePic: userPic,
@@ -40,8 +40,8 @@ class PostService: ObservableObject {
 
         let data: [String: Any] = [
             "id": post.id,
-            "groupId": post.groupId,
-            "groupCategory": post.groupCategory,
+            "circleId": post.circleId,
+            "circleName": post.circleName,
             "authorId": post.authorId,
             "authorName": post.authorName,
             "authorProfilePic": post.authorProfilePic as Any,
@@ -58,10 +58,9 @@ class PostService: ObservableObject {
         return post
     }
 
-    // MARK: - Read (feed)
+    // MARK: - Read
 
-    /// Posts from joined groups OR from followed users, sorted by time desc.
-    func fetchFeed(joinedGroupIds: [String], followingUserIds: [String], limit: Int = 50) async throws -> [Post] {
+    func fetchFeed(joinedCircleIds: [String], followingUserIds: [String], limit: Int = 50) async throws -> [Post] {
         let snapshot = try await postsCollection
             .order(by: "timestamp", descending: true)
             .limit(to: limit)
@@ -69,21 +68,18 @@ class PostService: ObservableObject {
 
         let allPosts = snapshot.documents.compactMap { postFromDocument($0) }
 
-        let joinedSet = Set(joinedGroupIds.map { $0.lowercased() })
+        let joinedSet = Set(joinedCircleIds.map { $0.lowercased() })
         let followingSet = Set(followingUserIds)
 
-        let filtered = allPosts.filter { post in
-            joinedSet.contains(post.groupCategory.lowercased()) ||
+        return allPosts.filter { post in
+            joinedSet.contains(post.circleName.lowercased()) ||
             followingSet.contains(post.authorId)
         }
-
-        return filtered
     }
 
-    /// Posts for a single group category.
-    func fetchGroupPosts(groupCategory: String, limit: Int = 50) async throws -> [Post] {
+    func fetchCirclePosts(circleName: String, limit: Int = 50) async throws -> [Post] {
         let snapshot = try await postsCollection
-            .whereField("groupCategory", isEqualTo: groupCategory)
+            .whereField("circleName", isEqualTo: circleName)
             .getDocuments()
 
         return snapshot.documents
@@ -137,7 +133,6 @@ class PostService: ObservableObject {
         try await postsCollection.document(postId)
             .collection("comments").document(comment.id).setData(data)
 
-        // Increment commentCount on the post
         try await postsCollection.document(postId)
             .updateData(["commentCount": FieldValue.increment(Int64(1))])
 
@@ -164,8 +159,6 @@ class PostService: ObservableObject {
         }
     }
 
-    // MARK: - Share (increment counter)
-
     func incrementShareCount(postId: String) async throws {
         try await postsCollection.document(postId)
             .updateData(["shareCount": FieldValue.increment(Int64(1))])
@@ -177,8 +170,8 @@ class PostService: ObservableObject {
         let d = doc.data()
         return Post(
             id: d["id"] as? String ?? doc.documentID,
-            groupId: d["groupId"] as? String ?? "",
-            groupCategory: d["groupCategory"] as? String ?? "",
+            circleId: d["circleId"] as? String ?? d["groupId"] as? String ?? "",
+            circleName: d["circleName"] as? String ?? d["groupCategory"] as? String ?? "",
             authorId: d["authorId"] as? String ?? "",
             authorName: d["authorName"] as? String ?? "Unknown",
             authorProfilePic: d["authorProfilePic"] as? String,

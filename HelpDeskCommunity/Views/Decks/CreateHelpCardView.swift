@@ -1,6 +1,6 @@
 //
 //  CreateHelpCardView.swift
-//  HelpDeskCommunity
+//  Helpdecks
 //
 
 import SwiftUI
@@ -9,6 +9,8 @@ struct CreateHelpCardView: View {
     @ObservedObject var helpCardService: HelpCardService
     @EnvironmentObject var locationService: LocationService
     @Environment(\.dismiss) private var dismiss
+
+    var circleId: String? = nil
 
     @State private var title = ""
     @State private var description = ""
@@ -97,7 +99,7 @@ struct CreateHelpCardView: View {
                 latitude: lat,
                 longitude: lng,
                 locationName: locName,
-                deckId: nil
+                circleId: circleId
             )
             dismiss()
         } catch {

@@ -1,6 +1,6 @@
 //
 //  FeedViewModel.swift
-//  HelpDeskCommunity
+//  Helpdecks
 //
 
 import Foundation
@@ -15,13 +15,12 @@ class FeedViewModel: ObservableObject {
 
     private let postService = PostService()
 
-    /// Load the Home feed from joined groups + followed users.
-    func loadFeed(joinedGroupIds: [String], followingUserIds: [String]) async {
+    func loadFeed(joinedCircleIds: [String], followingUserIds: [String]) async {
         isLoading = true
         errorMessage = nil
         do {
             posts = try await postService.fetchFeed(
-                joinedGroupIds: joinedGroupIds,
+                joinedCircleIds: joinedCircleIds,
                 followingUserIds: followingUserIds
             )
         } catch {
@@ -33,22 +32,20 @@ class FeedViewModel: ObservableObject {
         isLoading = false
     }
 
-    /// Load posts for a single group category (standalone group page).
-    func loadGroupFeed(groupCategory: String) async {
+    func loadCircleFeed(circleName: String) async {
         isLoading = true
         errorMessage = nil
         do {
-            posts = try await postService.fetchGroupPosts(groupCategory: groupCategory)
+            posts = try await postService.fetchCirclePosts(circleName: circleName)
         } catch {
             errorMessage = error.localizedDescription
         }
         isLoading = false
     }
 
-    /// Filter current posts by group category (client-side).
-    func filteredPosts(for groupCategory: String?) -> [Post] {
-        guard let category = groupCategory else { return posts }
-        return posts.filter { $0.groupCategory.lowercased() == category.lowercased() }
+    func filteredPosts(for circleName: String?) -> [Post] {
+        guard let name = circleName else { return posts }
+        return posts.filter { $0.circleName.lowercased() == name.lowercased() }
     }
 
     // MARK: - Interactions
@@ -56,7 +53,6 @@ class FeedViewModel: ObservableObject {
     func toggleLike(postId: String) async {
         do {
             try await postService.toggleLike(postId: postId)
-            // Optimistic: toggle in local list
             if let idx = posts.firstIndex(where: { $0.id == postId }) {
                 let userId = Auth.auth().currentUser?.uid ?? ""
                 if posts[idx].likes.contains(userId) {
@@ -85,11 +81,11 @@ class FeedViewModel: ObservableObject {
         }
     }
 
-    func createPost(groupId: String, groupCategory: String, title: String, body: String) async -> Bool {
+    func createPost(circleId: String, circleName: String, title: String, body: String) async -> Bool {
         do {
             let newPost = try await postService.createPost(
-                groupId: groupId,
-                groupCategory: groupCategory,
+                circleId: circleId,
+                circleName: circleName,
                 title: title,
                 body: body
             )

@@ -1,6 +1,6 @@
 //
 //  Post.swift
-//  HelpDeskCommunity
+//  Helpdecks
 //
 
 import Foundation
@@ -9,23 +9,23 @@ import SwiftData
 @Model
 final class Post {
     @Attribute(.unique) var id: String
-    var groupId: String
-    var groupCategory: String // GroupCategory rawValue
+    var circleId: String
+    var circleName: String
     var authorId: String
     var authorName: String
     var authorProfilePic: String?
     var title: String
     var body: String
-    var imageURL: String? // Only moderators can attach images
-    var likes: [String] // User IDs who liked
+    var imageURL: String?
+    var likes: [String]
     var commentCount: Int
     var shareCount: Int
     var timestamp: Date
 
     init(
         id: String = UUID().uuidString,
-        groupId: String,
-        groupCategory: String,
+        circleId: String,
+        circleName: String,
         authorId: String,
         authorName: String,
         authorProfilePic: String? = nil,
@@ -38,8 +38,8 @@ final class Post {
         timestamp: Date = Date()
     ) {
         self.id = id
-        self.groupId = groupId
-        self.groupCategory = groupCategory
+        self.circleId = circleId
+        self.circleName = circleName
         self.authorId = authorId
         self.authorName = authorName
         self.authorProfilePic = authorProfilePic

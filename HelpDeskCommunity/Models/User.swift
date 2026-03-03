@@ -1,8 +1,6 @@
 //
 //  User.swift
-//  HelpDeskCommunity
-//
-//  Created on Feb 12, 2026.
+//  Helpdecks
 //
 
 import Foundation
@@ -22,10 +20,10 @@ final class User {
     var lastSeen: Date
     var blockedUsers: [String]
     var followingUserIds: [String]
-    var joinedGroupIds: [String]
+    var joinedCircleIds: [String]
     var notificationSettings: NotificationSettings?
     var chatSettings: ChatSettings?
-    
+
     init(
         id: String = UUID().uuidString,
         email: String,
@@ -39,7 +37,7 @@ final class User {
         lastSeen: Date = Date(),
         blockedUsers: [String] = [],
         followingUserIds: [String] = [],
-        joinedGroupIds: [String] = [],
+        joinedCircleIds: [String] = [],
         notificationSettings: NotificationSettings? = nil,
         chatSettings: ChatSettings? = nil
     ) {
@@ -55,7 +53,7 @@ final class User {
         self.lastSeen = lastSeen
         self.blockedUsers = blockedUsers
         self.followingUserIds = followingUserIds
-        self.joinedGroupIds = joinedGroupIds
+        self.joinedCircleIds = joinedCircleIds
         self.notificationSettings = notificationSettings
         self.chatSettings = chatSettings
     }
@@ -65,7 +63,7 @@ final class User {
 struct NotificationSettings: Codable {
     var pushEnabled: Bool = true
     var soundEnabled: Bool = true
-    var groupNotificationsEnabled: Bool = true
+    var circleNotificationsEnabled: Bool = true
     var privateMessageNotificationsEnabled: Bool = true
 }
 

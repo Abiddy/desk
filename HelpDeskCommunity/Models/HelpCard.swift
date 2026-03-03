@@ -65,7 +65,7 @@ final class HelpCard {
     var latitude: Double?
     var longitude: Double?
     var locationName: String?
-    var deckId: String?
+    var circleId: String?
     var status: String
     var swipedRightUserIds: [String]
     var swipedLeftUserIds: [String]
@@ -85,7 +85,7 @@ final class HelpCard {
         latitude: Double? = nil,
         longitude: Double? = nil,
         locationName: String? = nil,
-        deckId: String? = nil,
+        circleId: String? = nil,
         status: String = HelpCardStatus.open.rawValue,
         swipedRightUserIds: [String] = [],
         swipedLeftUserIds: [String] = [],
@@ -104,7 +104,7 @@ final class HelpCard {
         self.latitude = latitude
         self.longitude = longitude
         self.locationName = locationName
-        self.deckId = deckId
+        self.circleId = circleId
         self.status = status
         self.swipedRightUserIds = swipedRightUserIds
         self.swipedLeftUserIds = swipedLeftUserIds

@@ -1,6 +1,6 @@
 //
 //  CreatePostView.swift
-//  HelpDeskCommunity
+//  Helpdecks
 //
 
 import SwiftUI
@@ -9,7 +9,8 @@ struct CreatePostView: View {
     @EnvironmentObject var feedViewModel: FeedViewModel
     @Environment(\.dismiss) private var dismiss
 
-    @State private var selectedCategory: GroupCategory = .classifieds
+    var preselectedCircle: CircleCategory? = nil
+    @State private var selectedCategory: CircleCategory = .tech
     @State private var title = ""
     @State private var postBody = ""
     @State private var isSubmitting = false
@@ -17,9 +18,9 @@ struct CreatePostView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Group") {
+                Section("Circle") {
                     Picker("Category", selection: $selectedCategory) {
-                        ForEach(GroupCategory.allCases, id: \.self) { category in
+                        ForEach(CircleCategory.allCases) { category in
                             Text(category.rawValue).tag(category)
                         }
                     }
@@ -43,15 +44,20 @@ struct CreatePostView: View {
                         .fontWeight(.semibold)
                 }
             }
+            .onAppear {
+                if let pre = preselectedCircle {
+                    selectedCategory = pre
+                }
+            }
         }
     }
 
     private func submit() async {
         isSubmitting = true
-        let groupId = selectedCategory.rawValue.lowercased()
+        let circleId = selectedCategory.rawValue.lowercased()
         let success = await feedViewModel.createPost(
-            groupId: groupId,
-            groupCategory: selectedCategory.rawValue,
+            circleId: circleId,
+            circleName: selectedCategory.rawValue,
             title: title.trimmingCharacters(in: .whitespaces),
             body: postBody.trimmingCharacters(in: .whitespaces)
         )

@@ -1,8 +1,6 @@
 //
 //  ContentView.swift
-//  HelpDeskCommunity
-//
-//  Created on Feb 12, 2026.
+//  Helpdecks
 //
 
 import SwiftUI
@@ -10,7 +8,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @EnvironmentObject var locationService: LocationService
-    
+
     var body: some View {
         ZStack {
             if authViewModel.showNDA {

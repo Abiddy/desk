@@ -1,56 +1,60 @@
 //
-//  CreateDeckView.swift
-//  HelpDeskCommunity
+//  CreateCircleView.swift
+//  Helpdecks
 //
 
 import SwiftUI
 
-struct CreateDeckView: View {
-    @ObservedObject var deckService: DeckService
-    var onCreated: (Deck) -> Void
-
+struct CreateCircleView: View {
+    @ObservedObject var circleService: CircleService
+    var onCreated: (() async -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
 
     @State private var name = ""
     @State private var description = ""
     @State private var isPublic = true
     @State private var isSubmitting = false
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("Deck Info") {
+                Section("Circle Details") {
                     TextField("Name (e.g. UIC MSA)", text: $name)
-                    TextField("Description", text: $description, axis: .vertical)
-                        .lineLimit(3...6)
+                    TextEditor(text: $description)
+                        .frame(minHeight: 80)
                 }
 
                 Section("Visibility") {
-                    Picker("Who can join?", selection: $isPublic) {
-                        Text("Public — anyone can join").tag(true)
-                        Text("Private — invite code only").tag(false)
+                    Picker("Type", selection: $isPublic) {
+                        Text("Public").tag(true)
+                        Text("Private (Invite Only)").tag(false)
                     }
-                    .pickerStyle(.inline)
+                    .pickerStyle(.segmented)
 
                     if !isPublic {
-                        Label("An invite code will be generated automatically", systemImage: "lock.fill")
+                        Text("An invite code will be generated so others can join.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
                 }
+
+                if let error = errorMessage {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
             }
-            .navigationTitle("Create a Deck")
+            .navigationTitle("New Circle")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") {
-                        Task { await submit() }
-                    }
-                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || isSubmitting)
-                    .fontWeight(.semibold)
+                    Button("Create") { Task { await submit() } }
+                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || isSubmitting)
+                        .fontWeight(.semibold)
                 }
             }
         }
@@ -58,18 +62,17 @@ struct CreateDeckView: View {
 
     private func submit() async {
         isSubmitting = true
+        errorMessage = nil
         do {
-            let deck = try await deckService.createDeck(
+            _ = try await circleService.createCircle(
                 name: name.trimmingCharacters(in: .whitespaces),
                 description: description.trimmingCharacters(in: .whitespaces),
                 isPublic: isPublic
             )
-            onCreated(deck)
+            await onCreated?()
             dismiss()
         } catch {
-            #if DEBUG
-            print("[CreateDeckView] submit error: \(error)")
-            #endif
+            errorMessage = error.localizedDescription
         }
         isSubmitting = false
     }

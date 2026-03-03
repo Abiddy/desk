@@ -51,7 +51,7 @@ struct EmailVerificationView: View {
                 }
             }
             .padding()
-            .background(Color(.systemGray6))
+            .background(Color(.systemGray6).opacity(0.5))
             .cornerRadius(12)
             .padding(.horizontal)
             

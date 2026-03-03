@@ -1,6 +1,6 @@
 //
 //  PostCardView.swift
-//  HelpDeskCommunity
+//  Helpdecks
 //
 
 import SwiftUI
@@ -11,7 +11,7 @@ struct PostCardView: View {
     var onLike: () -> Void = {}
     var onComment: () -> Void = {}
     var onShare: () -> Void = {}
-    var onGroupTap: (() -> Void)? = nil
+    var onCircleTap: (() -> Void)? = nil
     var onAuthorTap: (() -> Void)? = nil
 
     private var currentUserId: String {
@@ -23,135 +23,151 @@ struct PostCardView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Top row: author (left) + group pill (right)
-            HStack(alignment: .center) {
-                Button(action: { onAuthorTap?() }) {
-                    HStack(spacing: 8) {
-                        // Avatar
-                        if let pic = post.authorProfilePic, !pic.isEmpty {
-                            AsyncImage(url: URL(string: pic)) { image in
-                                image.resizable().scaledToFill()
-                            } placeholder: {
-                                Image(systemName: "person.circle.fill")
-                                    .resizable()
-                            }
-                            .frame(width: 36, height: 36)
-                            .clipShape(Circle())
-                        } else {
-                            Image(systemName: "person.circle.fill")
-                                .resizable()
-                                .frame(width: 36, height: 36)
-                                .foregroundColor(.gray)
-                        }
+        VStack(alignment: .leading, spacing: 0) {
+            // Header: avatar + name + time + menu
+            HStack(alignment: .center, spacing: 10) {
+                avatarView
+                    .frame(width: 40, height: 40)
 
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(post.authorName)
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                            Text(post.timestamp, style: .relative)
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(post.authorName)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                    HStack(spacing: 4) {
+                        Text(post.circleName)
+                            .font(.caption2)
+                            .foregroundColor(.purple)
+                        Text("·")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text(post.timestamp, style: .relative)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
                     }
                 }
-                .buttonStyle(.plain)
 
                 Spacer()
 
-                // Group category pill
-                if let onGroupTap = onGroupTap {
-                    Button(action: onGroupTap) {
-                        Text(post.groupCategory)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(Color.purple.opacity(0.2))
-                            .foregroundColor(.purple)
-                            .cornerRadius(12)
-                    }
-                    .buttonStyle(.plain)
-                } else {
-                    Text(post.groupCategory)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(Color.purple.opacity(0.2))
-                        .foregroundColor(.purple)
-                        .cornerRadius(12)
-                }
+                Image(systemName: "ellipsis")
+                    .foregroundColor(.secondary)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
+            .padding(.bottom, 10)
 
-            // Title + body
-            VStack(alignment: .leading, spacing: 4) {
+            // Divider
+            Rectangle()
+                .fill(Color(.separator).opacity(0.3))
+                .frame(height: 0.5)
+
+            // Content
+            VStack(alignment: .leading, spacing: 6) {
                 if !post.title.isEmpty {
                     Text(post.title)
-                        .font(.headline)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
                 }
                 if !post.body.isEmpty {
                     Text(post.body)
-                        .font(.body)
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
                         .lineLimit(4)
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
 
-            // Optional image (moderator posts)
+            // Optional image
             if let imageURL = post.imageURL, !imageURL.isEmpty {
                 AsyncImage(url: URL(string: imageURL)) { image in
                     image.resizable().scaledToFill()
                 } placeholder: {
-                    Rectangle()
-                        .fill(Color(.systemGray5))
-                        .frame(height: 180)
+                    Rectangle().fill(Color(.systemGray5)).frame(height: 180)
                 }
                 .frame(maxWidth: .infinity, maxHeight: 220)
                 .clipped()
-                .cornerRadius(10)
             }
 
-            // Bottom row: like, comment, share
-            HStack(spacing: 24) {
-                Button(action: onLike) {
-                    HStack(spacing: 4) {
-                        Image(systemName: isLiked ? "heart.fill" : "heart")
-                            .foregroundColor(isLiked ? .red : .secondary)
+            // Reactions row
+            HStack(spacing: 6) {
+                if post.likes.count > 0 {
+                    HStack(spacing: 2) {
+                        Image(systemName: "heart.fill")
+                            .font(.caption2)
+                            .foregroundColor(.red)
                         Text("\(post.likes.count)")
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                 }
-                .buttonStyle(.plain)
-
-                Button(action: onComment) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "bubble.left")
-                            .foregroundColor(.secondary)
-                        Text("\(post.commentCount)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .buttonStyle(.plain)
-
-                Button(action: onShare) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "square.and.arrow.up")
-                            .foregroundColor(.secondary)
-                        Text("\(post.shareCount)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .buttonStyle(.plain)
-
                 Spacer()
+                if post.commentCount > 0 {
+                    Text("\(post.commentCount) replies")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+
+            Rectangle()
+                .fill(Color(.separator).opacity(0.3))
+                .frame(height: 0.5)
+
+            // Action buttons
+            HStack(spacing: 0) {
+                actionButton(icon: isLiked ? "heart.fill" : "heart",
+                             label: "Like",
+                             color: isLiked ? .red : .secondary,
+                             action: onLike)
+
+                actionButton(icon: "bubble.left",
+                             label: "Reply",
+                             color: .secondary,
+                             action: onComment)
+
+                actionButton(icon: "square.and.arrow.up",
+                             label: "Share",
+                             color: .secondary,
+                             action: onShare)
+            }
+            .padding(.vertical, 4)
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(14)
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
+    }
+
+    @ViewBuilder
+    private var avatarView: some View {
+        if let pic = post.authorProfilePic, !pic.isEmpty {
+            AsyncImage(url: URL(string: pic)) { image in
+                image.resizable().scaledToFill()
+            } placeholder: {
+                Image(systemName: "person.circle.fill").resizable().foregroundColor(.gray)
+            }
+            .clipShape(SwiftUI.Circle())
+        } else {
+            Image(systemName: "person.circle.fill")
+                .resizable()
+                .foregroundColor(.gray)
+        }
+    }
+
+    private func actionButton(icon: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.caption)
+                Text(label)
+                    .font(.caption)
+            }
+            .foregroundColor(color)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+        }
+        .buttonStyle(.plain)
     }
 }

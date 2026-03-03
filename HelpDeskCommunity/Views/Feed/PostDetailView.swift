@@ -1,6 +1,6 @@
 //
 //  PostDetailView.swift
-//  HelpDeskCommunity
+//  Helpdecks
 //
 
 import SwiftUI
@@ -17,18 +17,15 @@ struct PostDetailView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    // Post content (reuse card layout inline)
                     postHeader
                     postBody
 
                     Divider()
 
-                    // Author follow button
                     followRow
 
                     Divider()
 
-                    // Comments
                     Text("Comments (\(comments.count))")
                         .font(.headline)
                         .padding(.horizontal)
@@ -54,15 +51,13 @@ struct PostDetailView: View {
                 .padding(.vertical)
             }
 
-            // Comment input bar
             commentInputBar
         }
+        .background(Color(.systemGroupedBackground))
         .navigationTitle("Post")
         .navigationBarTitleDisplayMode(.inline)
         .task { await loadComments() }
     }
-
-    // MARK: - Subviews
 
     private var postHeader: some View {
         HStack {
@@ -79,10 +74,10 @@ struct PostDetailView: View {
                 }
             }
             Spacer()
-            Text(post.groupCategory)
+            Text(post.circleName)
                 .font(.caption).fontWeight(.medium)
                 .padding(.horizontal, 10).padding(.vertical, 4)
-                .background(Color.purple.opacity(0.2))
+                .background(Color.purple.opacity(0.15))
                 .foregroundColor(.purple)
                 .cornerRadius(12)
         }
@@ -115,9 +110,9 @@ struct PostDetailView: View {
             Text(post.authorName)
                 .font(.subheadline).fontWeight(.medium)
             Spacer()
-            Button(action: {
+            Button {
                 Task { await followService.toggleFollow(post.authorId) }
-            }) {
+            } label: {
                 Text(followService.isFollowing(post.authorId) ? "Following" : "Follow")
                     .font(.subheadline).fontWeight(.semibold)
                     .padding(.horizontal, 16).padding(.vertical, 6)
@@ -133,8 +128,8 @@ struct PostDetailView: View {
     private var commentInputBar: some View {
         HStack(spacing: 8) {
             TextField("Add a comment...", text: $newCommentText)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-            Button(action: { Task { await submitComment() } }) {
+                .textFieldStyle(.roundedBorder)
+            Button { Task { await submitComment() } } label: {
                 Image(systemName: "paperplane.fill")
                     .foregroundColor(newCommentText.isEmpty ? .gray : .purple)
             }
@@ -142,10 +137,8 @@ struct PostDetailView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(Color(.systemBackground))
+        .background(Color.white)
     }
-
-    // MARK: - Actions
 
     private func loadComments() async {
         isLoading = true

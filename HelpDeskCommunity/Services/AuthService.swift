@@ -90,7 +90,7 @@ class AuthService: ObservableObject {
                 "notificationSettings": [
                     "pushEnabled": true,
                     "soundEnabled": true,
-                    "groupNotificationsEnabled": true,
+                    "circleNotificationsEnabled": true,
                     "privateMessageNotificationsEnabled": true
                 ],
                 "chatSettings": [
