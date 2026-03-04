@@ -72,7 +72,7 @@ struct CirclesListView: View {
                                     .fontWeight(.semibold)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 14)
-                                    .background(Color.purple)
+                                    .background(Color.blue)
                                     .foregroundColor(.white)
                                     .cornerRadius(12)
                             }
@@ -93,8 +93,16 @@ struct CirclesListView: View {
                 }
                 .padding(.vertical)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color(.systemBackground))
             .navigationTitle("Circles")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { /* Notifications - next iteration */ } label: {
+                        Image(systemName: "bell")
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
             .refreshable { await loadAll() }
             .task { await loadAll() }
             .sheet(isPresented: $showCreateCircle) {
@@ -140,7 +148,7 @@ struct CircleRowView: View {
         case "tech": return .blue
         case "medical": return .red
         case "legal": return .orange
-        case "business": return .purple
+        case "business": return .indigo
         default: return .gray
         }
     }
@@ -149,9 +157,9 @@ struct CircleRowView: View {
         HStack(spacing: 14) {
             Image(systemName: circle.iconName)
                 .font(.title2)
-                .foregroundColor(isPromoted ? categoryColor : .purple)
+                .foregroundColor(isPromoted ? categoryColor : .blue)
                 .frame(width: 48, height: 48)
-                .background(isPromoted ? categoryColor.opacity(0.12) : Color.purple.opacity(0.12))
+                .background(isPromoted ? categoryColor.opacity(0.12) : Color.blue.opacity(0.12))
                 .cornerRadius(12)
 
             VStack(alignment: .leading, spacing: 3) {

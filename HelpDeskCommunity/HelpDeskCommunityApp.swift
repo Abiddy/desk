@@ -18,6 +18,7 @@ struct HelpDeskCommunityApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(.light)
                 .environmentObject(authViewModel)
                 .environmentObject(locationService)
                 .environmentObject(joinedCirclesStore)

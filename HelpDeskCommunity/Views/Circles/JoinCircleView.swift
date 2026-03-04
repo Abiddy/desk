@@ -22,7 +22,7 @@ struct JoinCircleView: View {
 
                 Image(systemName: "ticket.fill")
                     .font(.system(size: 50))
-                    .foregroundColor(.purple)
+                    .foregroundColor(.blue)
 
                 Text("Join a Circle")
                     .font(.title2)
@@ -59,7 +59,7 @@ struct JoinCircleView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(inviteCode.count >= 6 ? Color.purple : Color.gray.opacity(0.3))
+                    .background(inviteCode.count >= 6 ? Color.blue : Color.gray.opacity(0.3))
                     .foregroundColor(.white)
                     .cornerRadius(12)
                 }

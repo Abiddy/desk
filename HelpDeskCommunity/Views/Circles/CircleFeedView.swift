@@ -11,11 +11,13 @@ struct CircleFeedView: View {
     @StateObject private var helpCardService = HelpCardService()
     @EnvironmentObject var followService: FollowService
     @EnvironmentObject var joinedCirclesStore: JoinedCirclesStore
+    @Environment(\.dismiss) private var dismiss
     @State private var selectedTab = 0
     @State private var showCreatePost = false
     @State private var showCreateCard = false
     @State private var deckCards: [HelpCard] = []
     @State private var isDeckLoading = true
+    @State private var deckCurrentIndex = 0
 
     private var isJoined: Bool {
         joinedCirclesStore.isJoined(circle.name)
@@ -23,17 +25,11 @@ struct CircleFeedView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            circleHeader
+            // Feed / Decks toggle (Speak/Listen style)
+            FeedDecksToggle(selectedTab: $selectedTab)
+                .padding(.horizontal)
+                .padding(.top, 8)
                 .padding(.bottom, 8)
-
-            // Segmented picker
-            Picker("", selection: $selectedTab) {
-                Text("Feed").tag(0)
-                Text("Decks").tag(1)
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-            .padding(.bottom, 8)
 
             // Tab content
             if selectedTab == 0 {
@@ -42,13 +38,43 @@ struct CircleFeedView: View {
                 decksTab
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color(.systemBackground))
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("")
+        .navigationBarBackButtonHidden(true)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                HStack(spacing: 8) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.blue)
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(circle.name)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                        Text("\(circle.followerCount) followers")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
             ToolbarItemGroup(placement: .topBarTrailing) {
+                Button {
+                    joinedCirclesStore.toggle(circle.name)
+                } label: {
+                    Text(isJoined ? "Joined" : "Join")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(isJoined ? Color(.systemGray5) : Color.blue)
+                        .foregroundColor(isJoined ? .primary : .white)
+                        .cornerRadius(16)
+                }
                 Button { showCreateCard = true } label: {
-                    Image(systemName: "hand.thumbsup.fill")
+                    Image(systemName: "hand.raised.fill")
                         .foregroundColor(.green)
                 }
             }
@@ -65,43 +91,6 @@ struct CircleFeedView: View {
         }
     }
 
-    // MARK: - Circle Header
-
-    private var circleHeader: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Image(systemName: circle.iconName)
-                        .font(.title3)
-                        .foregroundColor(.purple)
-                    Text(circle.name)
-                        .font(.title3)
-                        .fontWeight(.bold)
-                }
-                Text("\(circle.followerCount) followers")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            Spacer()
-
-            Button {
-                joinedCirclesStore.toggle(circle.name)
-            } label: {
-                Text(isJoined ? "Joined" : "Join")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 8)
-                    .background(isJoined ? Color(.systemGray5) : Color.purple)
-                    .foregroundColor(isJoined ? .primary : .white)
-                    .cornerRadius(20)
-            }
-        }
-        .padding(.horizontal)
-        .padding(.top, 8)
-    }
-
     // MARK: - Feed Tab
 
     private var feedTab: some View {
@@ -113,17 +102,23 @@ struct CircleFeedView: View {
             } else if feedViewModel.posts.isEmpty {
                 emptyFeedState
             } else {
-                LazyVStack(spacing: 12) {
-                    ForEach(feedViewModel.posts, id: \.id) { post in
-                        NavigationLink(destination: PostDetailView(post: post)) {
-                            PostCardView(
-                                post: post,
-                                onLike: { Task { await feedViewModel.toggleLike(postId: post.id) } },
-                                onComment: {},
-                                onShare: { Task { await feedViewModel.incrementShare(postId: post.id) } }
-                            )
+                LazyVStack(spacing: 0) {
+                    ForEach(Array(feedViewModel.posts.enumerated()), id: \.element.id) { index, post in
+                        VStack(spacing: 0) {
+                            NavigationLink(destination: PostDetailView(post: post)) {
+                                PostCardView(
+                                    post: post,
+                                    onLike: { Task { await feedViewModel.toggleLike(postId: post.id) } },
+                                    onComment: {},
+                                    onShare: { Task { await feedViewModel.incrementShare(postId: post.id) } }
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            if index < feedViewModel.posts.count - 1 {
+                                Divider()
+                                    .padding(.leading, 56)
+                            }
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal)
@@ -148,47 +143,241 @@ struct CircleFeedView: View {
         .padding(.top, 60)
     }
 
-    // MARK: - Decks Tab
+    // MARK: - Decks Tab (swipeable cards, no scrolling list)
 
     private var decksTab: some View {
-        ScrollView {
+        Group {
             if isDeckLoading {
                 ProgressView()
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 40)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if deckCards.isEmpty {
                 emptyDeckState
+            } else if deckCurrentIndex >= deckCards.count {
+                allCaughtUpState
             } else {
-                VStack(spacing: 16) {
-                    // Stats bar
-                    deckStatsBar
-
-                    // Card list preview
-                    LazyVStack(spacing: 12) {
-                        ForEach(deckCards, id: \.id) { card in
-                            DeckCardPreview(card: card)
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-                .padding(.vertical, 8)
+                deckSwipeContent(card: deckCards[deckCurrentIndex])
             }
         }
+        .background(Color(red: 0.97, green: 0.96, blue: 0.94))
         .refreshable {
             await loadDeckCards()
         }
     }
 
-    private var deckStatsBar: some View {
-        let urgentCount = deckCards.filter { $0.urgency == HelpCardUrgency.urgent.rawValue }.count
-        return HStack(spacing: 16) {
-            StatPill(icon: "rectangle.stack.fill", label: "\(deckCards.count) cards", color: .purple)
-            if urgentCount > 0 {
-                StatPill(icon: "flame.fill", label: "\(urgentCount) urgent", color: .red)
+    @ViewBuilder
+    private func deckSwipeContent(card: HelpCard) -> some View {
+        let skill = HelpCardSkill(rawValue: card.skill) ?? .other
+        VStack(spacing: 20) {
+            // Progress dots
+            HStack(spacing: 6) {
+                ForEach(0..<min(deckCards.count, 10), id: \.self) { i in
+                    SwiftUI.Circle()
+                        .fill(i == deckCurrentIndex ? Color.blue : Color(.systemGray4))
+                        .frame(width: 8, height: 8)
+                }
+                if deckCards.count > 10 {
+                    Text("+\(deckCards.count - 10)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
             }
+            .padding(.horizontal)
+
+            // Card
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Label(skill.rawValue, systemImage: skill.icon)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.blue.opacity(0.12))
+                        .foregroundColor(.blue)
+                        .cornerRadius(8)
+
+                    if card.urgency == HelpCardUrgency.urgent.rawValue {
+                        Label("Urgent", systemImage: "flame.fill")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.red.opacity(0.12))
+                            .foregroundColor(.red)
+                            .cornerRadius(8)
+                    }
+
+                    Spacer()
+                }
+
+                Text(card.title)
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
+                    .multilineTextAlignment(.leading)
+
+                Text(card.cardDescription)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.leading)
+
+                Spacer()
+
+                HStack(spacing: 10) {
+                    deckAuthorAvatar(card: card)
+                        .frame(width: 28, height: 28)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(card.authorName)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        if let locName = card.locationName {
+                            Text(locName)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    Spacer()
+
+                    Text(card.timestamp, style: .relative)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(24)
+            .frame(maxWidth: .infinity, minHeight: 320)
+            .background(Color.white)
+            .cornerRadius(20)
+            .shadow(color: .black.opacity(0.08), radius: 12, y: 6)
+            .padding(.horizontal, 20)
+
+            Spacer()
+
+            // Bottom buttons
+            HStack {
+                Button {
+                    deckGoBack()
+                } label: {
+                    Text("Back")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                }
+                .disabled(deckCurrentIndex == 0)
+                .opacity(deckCurrentIndex == 0 ? 0.4 : 1.0)
+
+                Spacer()
+
+                Button {
+                    deckHelpAction(card: card)
+                } label: {
+                    Text("I can help!")
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 28)
+                        .padding(.vertical, 14)
+                        .background(Color.green)
+                        .cornerRadius(24)
+                }
+            }
+            .padding(.horizontal, 24)
+
+            Button {
+                deckSkipAction(card: card)
+            } label: {
+                Text("Skip")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.bottom, 24)
+            .padding(.top, 8)
+        }
+        .padding(.top, 12)
+    }
+
+    @ViewBuilder
+    private func deckAuthorAvatar(card: HelpCard) -> some View {
+        Group {
+            if let pic = card.authorProfilePic, !pic.isEmpty {
+                AsyncImage(url: URL(string: pic)) { image in
+                    image.resizable().scaledToFill()
+                } placeholder: {
+                    Image(systemName: "person.fill").resizable().scaledToFit().frame(width: 14, height: 14).foregroundColor(Color(.systemGray3))
+                }
+                .clipShape(SwiftUI.Circle())
+            } else {
+                Image(systemName: "person.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 14, height: 14)
+                    .foregroundColor(Color(.systemGray3))
+            }
+        }
+        .frame(width: 28, height: 28)
+        .background(Color(.systemGray5))
+        .clipShape(SwiftUI.Circle())
+    }
+
+    private var allCaughtUpState: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 50))
+                .foregroundColor(.green)
+            Text("You're all caught up!")
+                .font(.title3)
+                .fontWeight(.medium)
+            Text("You've seen all the cards.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            Button("Start over") {
+                deckCurrentIndex = 0
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.blue)
+            .padding(.top, 8)
             Spacer()
         }
-        .padding(.horizontal)
+    }
+
+    private func deckHelpAction(card: HelpCard) {
+        Task {
+            do {
+                try await helpCardService.swipeRight(cardId: card.id)
+            } catch {
+                #if DEBUG
+                print("[CircleFeedView] swipeRight error: \(error)")
+                #endif
+            }
+        }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            deckCurrentIndex += 1
+        }
+    }
+
+    private func deckSkipAction(card: HelpCard) {
+        Task {
+            do {
+                try await helpCardService.swipeLeft(cardId: card.id)
+            } catch {
+                #if DEBUG
+                print("[CircleFeedView] swipeLeft error: \(error)")
+                #endif
+            }
+        }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            deckCurrentIndex += 1
+        }
+    }
+
+    private func deckGoBack() {
+        guard deckCurrentIndex > 0 else { return }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            deckCurrentIndex -= 1
+        }
     }
 
     private var emptyDeckState: some View {
@@ -211,6 +400,7 @@ struct CircleFeedView: View {
         isDeckLoading = true
         do {
             deckCards = try await helpCardService.fetchCircleCards(circleId: circle.id)
+            deckCurrentIndex = 0
         } catch {
             #if DEBUG
             print("[CircleFeedView] loadDeckCards error: \(error)")
@@ -220,99 +410,40 @@ struct CircleFeedView: View {
     }
 }
 
-// MARK: - Deck card preview row
+// MARK: - Feed / Decks Toggle (Speak/Listen style)
 
-struct DeckCardPreview: View {
-    let card: HelpCard
-
-    private var skill: HelpCardSkill {
-        HelpCardSkill(rawValue: card.skill) ?? .other
-    }
-
-    private var isUrgent: Bool {
-        card.urgency == HelpCardUrgency.urgent.rawValue
-    }
+struct FeedDecksToggle: View {
+    @Binding var selectedTab: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label(skill.rawValue, systemImage: skill.icon)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.purple.opacity(0.12))
-                    .foregroundColor(.purple)
-                    .cornerRadius(6)
+        HStack(spacing: 0) {
+            toggleOption(title: "Feed", tag: 0)
+            toggleOption(title: "Decks", tag: 1)
+        }
+        .padding(4)
+        .background(Color.black)
+        .cornerRadius(999)
+    }
 
-                if isUrgent {
-                    Label("Urgent", systemImage: "flame.fill")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.red.opacity(0.12))
-                        .foregroundColor(.red)
-                        .cornerRadius(6)
-                }
-
-                Spacer()
-
-                Text(card.timestamp, style: .relative)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+    private func toggleOption(title: String, tag: Int) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                selectedTab = tag
             }
-
-            Text(card.title)
+        } label: {
+            Text(title)
                 .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .lineLimit(2)
-
-            Text(card.cardDescription)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .lineLimit(2)
-
-            HStack(spacing: 8) {
-                Image(systemName: "person.circle.fill")
-                    .foregroundColor(.gray)
-                Text(card.authorName)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                if let loc = card.locationName {
-                    Text("· \(loc)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-        }
-        .padding(14)
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.04), radius: 3, y: 2)
-    }
-}
-
-// MARK: - Stat pill
-
-struct StatPill: View {
-    let icon: String
-    let label: String
-    let color: Color
-
-    var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.caption2)
-            Text(label)
-                .font(.caption)
                 .fontWeight(.medium)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(selectedTab == tag ? Color.white : Color.clear)
+                .foregroundColor(selectedTab == tag ? .black : .white)
+                .cornerRadius(999)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 999)
+                        .stroke(selectedTab == tag ? Color.black : Color.clear, lineWidth: 1)
+                )
         }
-        .foregroundColor(color)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(color.opacity(0.1))
-        .cornerRadius(8)
+        .buttonStyle(.plain)
     }
 }

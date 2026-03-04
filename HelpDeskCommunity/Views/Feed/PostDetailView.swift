@@ -62,10 +62,7 @@ struct PostDetailView: View {
     private var postHeader: some View {
         HStack {
             HStack(spacing: 8) {
-                Image(systemName: "person.circle.fill")
-                    .resizable()
-                    .frame(width: 40, height: 40)
-                    .foregroundColor(.gray)
+                postAuthorAvatar
                 VStack(alignment: .leading, spacing: 2) {
                     Text(post.authorName)
                         .font(.subheadline).fontWeight(.semibold)
@@ -77,11 +74,34 @@ struct PostDetailView: View {
             Text(post.circleName)
                 .font(.caption).fontWeight(.medium)
                 .padding(.horizontal, 10).padding(.vertical, 4)
-                .background(Color.purple.opacity(0.15))
-                .foregroundColor(.purple)
+                .background(Color.blue.opacity(0.15))
+                .foregroundColor(.blue)
                 .cornerRadius(12)
         }
         .padding(.horizontal)
+    }
+
+    @ViewBuilder
+    private var postAuthorAvatar: some View {
+        Group {
+            if let pic = post.authorProfilePic, !pic.isEmpty {
+                AsyncImage(url: URL(string: pic)) { image in
+                    image.resizable().scaledToFill()
+                } placeholder: {
+                    Image(systemName: "person.fill").resizable().foregroundColor(Color(.systemGray3))
+                }
+                .clipShape(SwiftUI.Circle())
+            } else {
+                Image(systemName: "person.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 16, height: 16)
+                    .foregroundColor(Color(.systemGray3))
+            }
+        }
+        .frame(width: 32, height: 32)
+        .background(Color(.systemGray5))
+        .clipShape(SwiftUI.Circle())
     }
 
     private var postBody: some View {
@@ -116,7 +136,7 @@ struct PostDetailView: View {
                 Text(followService.isFollowing(post.authorId) ? "Following" : "Follow")
                     .font(.subheadline).fontWeight(.semibold)
                     .padding(.horizontal, 16).padding(.vertical, 6)
-                    .background(followService.isFollowing(post.authorId) ? Color(.systemGray4) : Color.purple)
+                    .background(followService.isFollowing(post.authorId) ? Color(.systemGray4) : Color.blue)
                     .foregroundColor(followService.isFollowing(post.authorId) ? .primary : .white)
                     .cornerRadius(16)
             }
@@ -131,7 +151,7 @@ struct PostDetailView: View {
                 .textFieldStyle(.roundedBorder)
             Button { Task { await submitComment() } } label: {
                 Image(systemName: "paperplane.fill")
-                    .foregroundColor(newCommentText.isEmpty ? .gray : .purple)
+                    .foregroundColor(newCommentText.isEmpty ? .gray : .blue)
             }
             .disabled(newCommentText.trimmingCharacters(in: .whitespaces).isEmpty)
         }
@@ -172,10 +192,7 @@ struct CommentRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            Image(systemName: "person.circle.fill")
-                .resizable()
-                .frame(width: 28, height: 28)
-                .foregroundColor(.gray)
+            commentAuthorAvatar
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
@@ -188,5 +205,28 @@ struct CommentRow: View {
                     .font(.subheadline)
             }
         }
+    }
+
+    @ViewBuilder
+    private var commentAuthorAvatar: some View {
+        Group {
+            if let pic = comment.authorProfilePic, !pic.isEmpty {
+                AsyncImage(url: URL(string: pic)) { image in
+                    image.resizable().scaledToFill()
+                } placeholder: {
+                    Image(systemName: "person.fill").resizable().scaledToFit().frame(width: 14, height: 14).foregroundColor(Color(.systemGray3))
+                }
+                .clipShape(SwiftUI.Circle())
+            } else {
+                Image(systemName: "person.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 14, height: 14)
+                    .foregroundColor(Color(.systemGray3))
+            }
+        }
+        .frame(width: 28, height: 28)
+        .background(Color(.systemGray5))
+        .clipShape(SwiftUI.Circle())
     }
 }

@@ -11,7 +11,7 @@ struct AuthenticationView: View {
     @State private var showSignIn = false
 
     private let gridIcons: [(String, Color)] = [
-        ("hands.sparkles.fill", .purple),
+        ("hands.sparkles.fill", .blue),
         ("heart.circle.fill", .pink),
         ("person.3.fill", .blue),
         ("lightbulb.fill", .yellow),

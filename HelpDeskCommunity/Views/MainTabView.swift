@@ -10,24 +10,70 @@ struct MainTabView: View {
     @State private var selectedTab = 0
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            HomeView()
-                .tabItem { Label("Home", systemImage: "house.fill") }
-                .tag(0)
+        mainContent
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .safeAreaInset(edge: .bottom) {
+                ModularTabBar(selectedTab: $selectedTab)
+            }
+    }
 
-            CirclesListView()
-                .tabItem { Label("Circles", systemImage: "circle.grid.3x3.fill") }
-                .tag(1)
-
-            ChatsView()
-                .tabItem { Label("Chats", systemImage: "message.fill") }
-                .tag(2)
-
-            ProfileView()
-                .tabItem { Label("Profile", systemImage: "person.fill") }
-                .tag(3)
+    @ViewBuilder
+    private var mainContent: some View {
+        switch selectedTab {
+        case 0: HomeView()
+        case 1: CirclesListView()
+        case 2: ChatsView()
+        case 3: ProfileView()
+        default: HomeView()
         }
-        .tint(.purple)
+    }
+}
+
+// MARK: - Modular Tab Bar (extracted to fix compiler type-check)
+
+struct ModularTabBar: View {
+    @Binding var selectedTab: Int
+
+    private let tabs: [(icon: String, tag: Int)] = [
+        ("house.fill", 0),
+        ("square.grid.2x2.fill", 1),
+        ("bubble.left.and.bubble.right.fill", 2),
+        ("person.crop.circle.fill", 3)
+    ]
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(tabs, id: \.tag) { tab in
+                tabButton(tab: tab)
+            }
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 12)
+        .background(Color(.systemBackground))
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color(.separator).opacity(0.3))
+                .frame(height: 0.5)
+        }
+    }
+
+    private func tabButton(tab: (icon: String, tag: Int)) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                selectedTab = tab.tag
+            }
+        } label: {
+            ZStack {
+                SwiftUI.Circle()
+                    .fill(selectedTab == tab.tag ? Color.blue : Color(.systemGray5))
+                    .frame(width: 36, height: 36)
+                Image(systemName: tab.icon)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(selectedTab == tab.tag ? .white : Color(.systemGray))
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -37,7 +83,6 @@ struct HomeView: View {
     @EnvironmentObject var joinedCirclesStore: JoinedCirclesStore
     @EnvironmentObject var feedViewModel: FeedViewModel
     @EnvironmentObject var followService: FollowService
-    @State private var showCreatePost = false
 
     var body: some View {
         NavigationStack {
@@ -58,37 +103,40 @@ struct HomeView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.top, 60)
                 } else {
-                    LazyVStack(spacing: 12) {
-                        ForEach(feedViewModel.posts, id: \.id) { post in
-                            NavigationLink(destination: PostDetailView(post: post)) {
-                                PostCardView(
-                                    post: post,
-                                    onLike: { Task { await feedViewModel.toggleLike(postId: post.id) } },
-                                    onComment: {},
-                                    onShare: { Task { await feedViewModel.incrementShare(postId: post.id) } }
-                                )
+                    LazyVStack(spacing: 0) {
+                        ForEach(Array(feedViewModel.posts.enumerated()), id: \.element.id) { index, post in
+                            VStack(spacing: 0) {
+                                NavigationLink(destination: PostDetailView(post: post)) {
+                                    PostCardView(
+                                        post: post,
+                                        onLike: { Task { await feedViewModel.toggleLike(postId: post.id) } },
+                                        onComment: {},
+                                        onShare: { Task { await feedViewModel.incrementShare(postId: post.id) } }
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                if index < feedViewModel.posts.count - 1 {
+                                    Divider()
+                                        .padding(.leading, 56)
+                                }
                             }
-                            .buttonStyle(.plain)
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 8)
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color(.systemBackground))
             .refreshable { await loadFeed() }
             .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button { showCreatePost = true } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundColor(.purple)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { /* Notifications - next iteration */ } label: {
+                        Image(systemName: "bell")
+                            .foregroundColor(.primary)
                     }
                 }
-            }
-            .sheet(isPresented: $showCreatePost) {
-                CreatePostView()
             }
             .task { await loadFeed() }
         }
@@ -108,7 +156,17 @@ struct ChatsView: View {
         NavigationStack {
             Text("Chats - Coming Soon")
                 .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(.systemBackground))
                 .navigationTitle("Chats")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button { /* Notifications - next iteration */ } label: {
+                            Image(systemName: "bell")
+                                .foregroundColor(.primary)
+                        }
+                    }
+                }
         }
     }
 }
@@ -128,7 +186,7 @@ struct ProfileView: View {
                     VStack(spacing: 16) {
                         Image(systemName: "person.circle.fill")
                             .font(.system(size: 100))
-                            .foregroundColor(.purple)
+                            .foregroundColor(.blue)
 
                         Text(authViewModel.authService.currentUser?.name ?? "User")
                             .font(.title2)
@@ -141,7 +199,7 @@ struct ProfileView: View {
                         if let location = locationService.locationString ?? authViewModel.authService.currentUser?.location {
                             HStack {
                                 Image(systemName: "location.fill")
-                                    .foregroundColor(.purple)
+                                    .foregroundColor(.blue)
                                 Text(location)
                                     .font(.subheadline)
                             }
@@ -252,8 +310,16 @@ struct ProfileView: View {
                 }
                 .padding(.vertical)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color(.systemBackground))
             .navigationTitle("Profile")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { /* Notifications - next iteration */ } label: {
+                        Image(systemName: "bell")
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
         }
     }
 }
@@ -267,7 +333,7 @@ struct SettingsRow: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(.purple)
+                .foregroundColor(.blue)
                 .frame(width: 24)
             Text(title)
                 .foregroundColor(.primary)

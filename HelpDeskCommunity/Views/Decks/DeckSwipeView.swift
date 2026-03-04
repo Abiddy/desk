@@ -69,8 +69,8 @@ struct DeckSwipeView: View {
                         .fontWeight(.semibold)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(Color.purple.opacity(0.12))
-                        .foregroundColor(.purple)
+                        .background(Color.blue.opacity(0.12))
+                        .foregroundColor(.blue)
                         .cornerRadius(8)
 
                     if card.urgency == HelpCardUrgency.urgent.rawValue {
@@ -105,7 +105,7 @@ struct DeckSwipeView: View {
                 // Author info
                 HStack(spacing: 10) {
                     authorAvatar(card: card)
-                        .frame(width: 36, height: 36)
+                        .frame(width: 28, height: 28)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(card.authorName)
@@ -186,7 +186,7 @@ struct DeckSwipeView: View {
         HStack(spacing: 6) {
             ForEach(0..<min(totalCards, 10), id: \.self) { i in
                 SwiftUI.Circle()
-                    .fill(i == currentIndex ? Color.purple : Color(.systemGray4))
+                    .fill(i == currentIndex ? Color.blue : Color(.systemGray4))
                     .frame(width: 8, height: 8)
             }
             if totalCards > 10 {
@@ -202,18 +202,25 @@ struct DeckSwipeView: View {
 
     @ViewBuilder
     private func authorAvatar(card: HelpCard) -> some View {
-        if let pic = card.authorProfilePic, !pic.isEmpty {
-            AsyncImage(url: URL(string: pic)) { image in
-                image.resizable().scaledToFill()
-            } placeholder: {
-                Image(systemName: "person.circle.fill").resizable().foregroundColor(.gray)
+        Group {
+            if let pic = card.authorProfilePic, !pic.isEmpty {
+                AsyncImage(url: URL(string: pic)) { image in
+                    image.resizable().scaledToFill()
+                } placeholder: {
+                    Image(systemName: "person.fill").resizable().scaledToFit().frame(width: 14, height: 14).foregroundColor(Color(.systemGray3))
+                }
+                .clipShape(SwiftUI.Circle())
+            } else {
+                Image(systemName: "person.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 14, height: 14)
+                    .foregroundColor(Color(.systemGray3))
             }
-            .clipShape(SwiftUI.Circle())
-        } else {
-            Image(systemName: "person.circle.fill")
-                .resizable()
-                .foregroundColor(.gray)
         }
+        .frame(width: 28, height: 28)
+        .background(Color(.systemGray5))
+        .clipShape(SwiftUI.Circle())
     }
 
     // MARK: - States
@@ -248,7 +255,7 @@ struct DeckSwipeView: View {
                 .foregroundColor(.secondary)
             Button("Done") { dismiss() }
                 .buttonStyle(.borderedProminent)
-                .tint(.purple)
+                .tint(.blue)
                 .padding(.top, 8)
             Spacer()
         }

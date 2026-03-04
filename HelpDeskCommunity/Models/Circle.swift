@@ -28,7 +28,7 @@ enum CircleCategory: String, Codable, CaseIterable, Identifiable {
         case .tech: return "blue"
         case .medical: return "red"
         case .legal: return "orange"
-        case .business: return "purple"
+        case .business: return "indigo"
         }
     }
 }

@@ -27,7 +27,6 @@ struct PostCardView: View {
             // Header: avatar + name + time + menu
             HStack(alignment: .center, spacing: 10) {
                 avatarView
-                    .frame(width: 40, height: 40)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(post.authorName)
@@ -37,7 +36,7 @@ struct PostCardView: View {
                     HStack(spacing: 4) {
                         Text(post.circleName)
                             .font(.caption2)
-                            .foregroundColor(.purple)
+                            .foregroundColor(.blue)
                         Text("·")
                             .font(.caption2)
                             .foregroundColor(.secondary)
@@ -53,13 +52,8 @@ struct PostCardView: View {
                     .foregroundColor(.secondary)
             }
             .padding(.horizontal, 16)
-            .padding(.top, 14)
-            .padding(.bottom, 10)
-
-            // Divider
-            Rectangle()
-                .fill(Color(.separator).opacity(0.3))
-                .frame(height: 0.5)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
 
             // Content
             VStack(alignment: .leading, spacing: 6) {
@@ -112,10 +106,6 @@ struct PostCardView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
 
-            Rectangle()
-                .fill(Color(.separator).opacity(0.3))
-                .frame(height: 0.5)
-
             // Action buttons
             HStack(spacing: 0) {
                 actionButton(icon: isLiked ? "heart.fill" : "heart",
@@ -135,25 +125,29 @@ struct PostCardView: View {
             }
             .padding(.vertical, 4)
         }
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
     }
 
     @ViewBuilder
     private var avatarView: some View {
-        if let pic = post.authorProfilePic, !pic.isEmpty {
-            AsyncImage(url: URL(string: pic)) { image in
-                image.resizable().scaledToFill()
-            } placeholder: {
-                Image(systemName: "person.circle.fill").resizable().foregroundColor(.gray)
+        Group {
+            if let pic = post.authorProfilePic, !pic.isEmpty {
+                AsyncImage(url: URL(string: pic)) { image in
+                    image.resizable().scaledToFill()
+                } placeholder: {
+                    Image(systemName: "person.fill").resizable().scaledToFit().frame(width: 16, height: 16).foregroundColor(Color(.systemGray3))
+                }
+                .clipShape(SwiftUI.Circle())
+            } else {
+                Image(systemName: "person.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 16, height: 16)
+                    .foregroundColor(Color(.systemGray3))
             }
-            .clipShape(SwiftUI.Circle())
-        } else {
-            Image(systemName: "person.circle.fill")
-                .resizable()
-                .foregroundColor(.gray)
         }
+        .frame(width: 32, height: 32)
+        .background(Color(.systemGray5))
+        .clipShape(SwiftUI.Circle())
     }
 
     private func actionButton(icon: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
