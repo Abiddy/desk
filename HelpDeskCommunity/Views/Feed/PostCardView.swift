@@ -8,7 +8,7 @@ import FirebaseAuth
 
 struct PostCardView: View {
     let post: Post
-    var onLike: () -> Void = {}
+    var onPromote: () -> Void = {}
     var onComment: () -> Void = {}
     var onShare: () -> Void = {}
     var onCircleTap: (() -> Void)? = nil
@@ -18,7 +18,7 @@ struct PostCardView: View {
         Auth.auth().currentUser?.uid ?? ""
     }
 
-    private var isLiked: Bool {
+    private var isPromoted: Bool {
         post.likes.contains(currentUserId)
     }
 
@@ -84,46 +84,23 @@ struct PostCardView: View {
                 .clipped()
             }
 
-            // Reactions row
-            HStack(spacing: 6) {
-                if post.likes.count > 0 {
-                    HStack(spacing: 2) {
-                        Image(systemName: "heart.fill")
-                            .font(.caption2)
-                            .foregroundColor(.red)
-                        Text("\(post.likes.count)")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                Spacer()
-                if post.commentCount > 0 {
-                    Text("\(post.commentCount) replies")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-
             // Action buttons
             HStack(spacing: 0) {
-                actionButton(icon: isLiked ? "heart.fill" : "heart",
-                             label: "Like",
-                             color: isLiked ? .red : .secondary,
-                             action: onLike)
+                promoteButton
 
-                actionButton(icon: "bubble.left",
-                             label: "Reply",
-                             color: .secondary,
-                             action: onComment)
+                Rectangle()
+                    .fill(Color(.systemGray5))
+                    .frame(width: 1, height: 20)
 
-                actionButton(icon: "square.and.arrow.up",
-                             label: "Share",
-                             color: .secondary,
-                             action: onShare)
+                actionButton(icon: "bubble.left", label: nil, color: Color(.systemGray), action: onComment)
+
+                Rectangle()
+                    .fill(Color(.systemGray5))
+                    .frame(width: 1, height: 20)
+
+                actionButton(icon: "square.and.arrow.up", label: nil, color: Color(.systemGray), action: onShare)
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 12)
         }
     }
 
@@ -150,17 +127,37 @@ struct PostCardView: View {
         .clipShape(SwiftUI.Circle())
     }
 
-    private func actionButton(icon: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
+    private var promoteButton: some View {
+        Button(action: onPromote) {
+            HStack(spacing: 6) {
+                Image(systemName: isPromoted ? "arrow.up.circle.fill" : "arrow.up.circle")
+                    .font(.system(size: 16, weight: .medium))
+                Text("Promote")
+                    .font(.system(size: 14))
+                if post.likes.count > 0 {
+                    Text("\(post.likes.count)")
+                        .font(.system(size: 14))
+                        .foregroundColor(isPromoted ? .blue.opacity(0.9) : Color(.systemGray2))
+                }
+            }
+            .foregroundColor(isPromoted ? .blue : Color(.systemGray))
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func actionButton(icon: String, label: String?, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.caption)
-                Text(label)
-                    .font(.caption)
+                    .font(.system(size: 16, weight: .medium))
+                if let label = label {
+                    Text(label)
+                        .font(.system(size: 14))
+                }
             }
             .foregroundColor(color)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
         }
         .buttonStyle(.plain)
     }

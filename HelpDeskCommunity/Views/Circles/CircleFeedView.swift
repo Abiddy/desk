@@ -108,7 +108,7 @@ struct CircleFeedView: View {
                             NavigationLink(destination: PostDetailView(post: post)) {
                                 PostCardView(
                                     post: post,
-                                    onLike: { Task { await feedViewModel.toggleLike(postId: post.id) } },
+                                    onPromote: { Task { await feedViewModel.toggleLike(postId: post.id) } },
                                     onComment: {},
                                     onShare: { Task { await feedViewModel.incrementShare(postId: post.id) } }
                                 )

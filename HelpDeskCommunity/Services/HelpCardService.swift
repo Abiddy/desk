@@ -119,6 +119,18 @@ class HelpCardService: ObservableObject {
         }
     }
 
+    /// Cards from all circles for the HelpDeck swipe page (user hasn't swiped yet).
+    func fetchCardsForDeck(limit: Int = 100) async throws -> [HelpCard] {
+        let userId = Auth.auth().currentUser?.uid ?? ""
+        let allCards = try await fetchCards(limit: limit)
+
+        return allCards.filter { card in
+            card.authorId != userId &&
+            !card.swipedRightUserIds.contains(userId) &&
+            !card.swipedLeftUserIds.contains(userId)
+        }
+    }
+
     // MARK: - Swipe actions
 
     func swipeRight(cardId: String) async throws {

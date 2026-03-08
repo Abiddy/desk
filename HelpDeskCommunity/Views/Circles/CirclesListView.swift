@@ -13,9 +13,53 @@ struct CirclesListView: View {
     @State private var showCreateCircle = false
     @State private var showJoinCircle = false
     @State private var isLoading = true
+    @State private var searchText = ""
+
+    private var filteredPromoted: [Circle] {
+        filterCircles(promotedCircles)
+    }
+    private var filteredMyCircles: [Circle] {
+        filterCircles(myCircles)
+    }
+    private var filteredDiscover: [Circle] {
+        filterCircles(discoverCircles)
+    }
+
+    private func filterCircles(_ circles: [Circle]) -> [Circle] {
+        guard !searchText.trimmingCharacters(in: .whitespaces).isEmpty else { return circles }
+        let query = searchText.lowercased()
+        return circles.filter {
+            $0.name.lowercased().contains(query) ||
+            $0.category.lowercased().contains(query) ||
+            $0.circleDescription.lowercased().contains(query)
+        }
+    }
 
     var body: some View {
         NavigationStack {
+            VStack(spacing: 0) {
+                // Custom search bar - rounded, transparent, custom icon
+                HStack(spacing: 10) {
+                    Image("SearchIcon", bundle: .module)
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 18, height: 18)
+                        .foregroundColor(Color(.systemGray))
+
+                    TextField("Search circles", text: $searchText)
+                        .font(.system(size: 16))
+                        .autocorrectionDisabled()
+                }
+                .padding(12)
+                .background(Color.clear)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
+                )
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     if isLoading {
@@ -24,10 +68,10 @@ struct CirclesListView: View {
                             .padding(.top, 40)
                     } else {
                         // Promoted circles
-                        if !promotedCircles.isEmpty {
+                        if !filteredPromoted.isEmpty {
                             sectionHeader("Promoted")
                             LazyVStack(spacing: 10) {
-                                ForEach(promotedCircles, id: \.id) { circle in
+                                ForEach(filteredPromoted, id: \.id) { circle in
                                     NavigationLink(destination: CircleFeedView(circle: circle)) {
                                         CircleRowView(circle: circle, isPromoted: true)
                                     }
@@ -38,10 +82,10 @@ struct CirclesListView: View {
                         }
 
                         // My circles
-                        if !myCircles.isEmpty {
+                        if !filteredMyCircles.isEmpty {
                             sectionHeader("My Circles")
                             LazyVStack(spacing: 10) {
-                                ForEach(myCircles, id: \.id) { circle in
+                                ForEach(filteredMyCircles, id: \.id) { circle in
                                     NavigationLink(destination: CircleFeedView(circle: circle)) {
                                         CircleRowView(circle: circle, isPromoted: false)
                                     }
@@ -52,10 +96,10 @@ struct CirclesListView: View {
                         }
 
                         // Discover
-                        if !discoverCircles.isEmpty {
+                        if !filteredDiscover.isEmpty {
                             sectionHeader("Discover")
                             LazyVStack(spacing: 10) {
-                                ForEach(discoverCircles, id: \.id) { circle in
+                                ForEach(filteredDiscover, id: \.id) { circle in
                                     NavigationLink(destination: CircleFeedView(circle: circle)) {
                                         CircleRowView(circle: circle, isPromoted: false)
                                     }
@@ -63,6 +107,23 @@ struct CirclesListView: View {
                                 }
                             }
                             .padding(.horizontal)
+                        }
+
+                        // No results
+                        if !searchText.isEmpty && filteredPromoted.isEmpty && filteredMyCircles.isEmpty && filteredDiscover.isEmpty {
+                            VStack(spacing: 12) {
+                                Image("SearchIcon", bundle: .module)
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 40, height: 40)
+                                    .foregroundColor(.secondary)
+                                Text("No circles match \"\(searchText)\"")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 40)
                         }
 
                         // Actions
@@ -94,11 +155,18 @@ struct CirclesListView: View {
                 .padding(.vertical)
             }
             .background(Color(.systemBackground))
-            .navigationTitle("Circles")
+            }
+            .background(Color(.systemBackground))
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { /* Notifications - next iteration */ } label: {
-                        Image(systemName: "bell")
+                        Image("BellIcon", bundle: .module)
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 22, height: 22)
                             .foregroundColor(.primary)
                     }
                 }

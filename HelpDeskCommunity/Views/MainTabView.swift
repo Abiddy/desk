@@ -22,8 +22,9 @@ struct MainTabView: View {
         switch selectedTab {
         case 0: HomeView()
         case 1: CirclesListView()
-        case 2: ChatsView()
-        case 3: ProfileView()
+        case 2: HelpDeckSwipeView()
+        case 3: ChatsView()
+        case 4: ProfileView()
         default: HomeView()
         }
     }
@@ -35,10 +36,11 @@ struct ModularTabBar: View {
     @Binding var selectedTab: Int
 
     private let tabs: [(icon: String, tag: Int)] = [
-        ("house.fill", 0),
-        ("square.grid.2x2.fill", 1),
-        ("bubble.left.and.bubble.right.fill", 2),
-        ("person.crop.circle.fill", 3)
+        ("HomeIcon", 0),
+        ("SearchIcon", 1),
+        ("CardsIcon", 2),
+        ("MessageIcon", 3),
+        ("ProfileIcon", 4)
     ]
 
     var body: some View {
@@ -63,15 +65,13 @@ struct ModularTabBar: View {
                 selectedTab = tab.tag
             }
         } label: {
-            ZStack {
-                SwiftUI.Circle()
-                    .fill(selectedTab == tab.tag ? Color.blue : Color(.systemGray5))
-                    .frame(width: 36, height: 36)
-                Image(systemName: tab.icon)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(selectedTab == tab.tag ? .white : Color(.systemGray))
-            }
-            .frame(maxWidth: .infinity)
+            Image(tab.icon, bundle: .module)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 24, height: 24)
+                .foregroundColor(selectedTab == tab.tag ? .blue : Color(.systemGray))
+                .frame(maxWidth: .infinity)
         }
         .buttonStyle(.plain)
     }
@@ -109,7 +109,7 @@ struct HomeView: View {
                                 NavigationLink(destination: PostDetailView(post: post)) {
                                     PostCardView(
                                         post: post,
-                                        onLike: { Task { await feedViewModel.toggleLike(postId: post.id) } },
+                                        onPromote: { Task { await feedViewModel.toggleLike(postId: post.id) } },
                                         onComment: {},
                                         onShare: { Task { await feedViewModel.incrementShare(postId: post.id) } }
                                     )
@@ -128,12 +128,16 @@ struct HomeView: View {
             }
             .background(Color(.systemBackground))
             .refreshable { await loadFeed() }
-            .navigationTitle("Home")
+            .navigationTitle("Helpdesk")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { /* Notifications - next iteration */ } label: {
-                        Image(systemName: "bell")
+                        Image("BellIcon", bundle: .module)
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 22, height: 22)
                             .foregroundColor(.primary)
                     }
                 }
@@ -162,7 +166,11 @@ struct ChatsView: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button { /* Notifications - next iteration */ } label: {
-                            Image(systemName: "bell")
+                            Image("BellIcon", bundle: .module)
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 22, height: 22)
                                 .foregroundColor(.primary)
                         }
                     }
@@ -315,7 +323,11 @@ struct ProfileView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { /* Notifications - next iteration */ } label: {
-                        Image(systemName: "bell")
+                        Image("BellIcon", bundle: .module)
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 22, height: 22)
                             .foregroundColor(.primary)
                     }
                 }

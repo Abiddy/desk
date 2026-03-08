@@ -21,7 +21,7 @@ struct Constants {
     }
 
     struct AppInfo {
-        static let appName = "Helpdecks"
+        static let appName = "HelpDesk"
         static let supportEmail = "support@helpdecks.com"
     }
 }

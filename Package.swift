@@ -25,7 +25,8 @@ let package = Package(
                 .product(name: "FirebaseStorage", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseMessaging", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseFunctions", package: "firebase-ios-sdk")
-            ]),
+            ],
+            resources: [.process("Resources")]),
         .testTarget(
             name: "HelpDeskCommunityTests",
             dependencies: ["HelpDeskCommunity"]),
