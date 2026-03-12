@@ -22,6 +22,10 @@ struct PostCardView: View {
         post.likes.contains(currentUserId)
     }
 
+    private var circleFromPost: Circle {
+        Circle(id: post.circleId, name: post.circleName)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header: avatar + name + time + menu
@@ -33,23 +37,25 @@ struct PostCardView: View {
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
-                    HStack(spacing: 4) {
-                        Text(post.circleName)
-                            .font(.caption2)
-                            .foregroundColor(.blue)
-                        Text("·")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                        Text(post.timestamp, style: .relative)
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
+                    Text(post.timestamp, style: .relative)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                 }
 
                 Spacer()
 
-                Image(systemName: "ellipsis")
-                    .foregroundColor(.secondary)
+                NavigationLink(destination: CircleFeedView(circle: circleFromPost)) {
+                    HStack(spacing: 4) {
+                        Text(post.circleName)
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.blue)
+                        Image(systemName: "arrow.right")
+                            .font(.caption2)
+                            .foregroundColor(.blue)
+                    }
+                }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
             .padding(.top, 16)

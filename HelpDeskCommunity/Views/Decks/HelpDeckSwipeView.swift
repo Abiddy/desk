@@ -23,18 +23,21 @@ struct HelpDeckSwipeView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color(red: 0.97, green: 0.96, blue: 0.94)
-                    .ignoresSafeArea()
+            GeometryReader { geometry in
+                let cardMaxHeight = geometry.size.height - 48
+                ZStack {
+                    Color(red: 0.97, green: 0.96, blue: 0.94)
+                        .ignoresSafeArea()
 
-                if isLoading {
-                    ProgressView("Loading cards...")
-                } else if cards.isEmpty {
-                    emptyState
-                } else if currentIndex >= cards.count {
-                    allDoneState
-                } else if let card = currentCard {
-                    cardStack(card: card)
+                    if isLoading {
+                        ProgressView("Loading cards...")
+                    } else if cards.isEmpty {
+                        emptyState
+                    } else if currentIndex >= cards.count {
+                        allDoneState
+                    } else if let card = currentCard {
+                        cardStack(card: card, maxHeight: cardMaxHeight)
+                    }
                 }
             }
             .navigationTitle("HelpDeck")
@@ -55,7 +58,7 @@ struct HelpDeckSwipeView: View {
     // MARK: - Card Stack
 
     @ViewBuilder
-    private func cardStack(card: HelpCard) -> some View {
+    private func cardStack(card: HelpCard, maxHeight: CGFloat = 400) -> some View {
         ZStack {
             // "I can help" overlay (right swipe - green)
             Text("I can help")
@@ -94,7 +97,7 @@ struct HelpDeckSwipeView: View {
                 .zIndex(2)
 
             // Card
-            helpCardView(card: card)
+            helpCardView(card: card, maxHeight: maxHeight)
                 .offset(x: dragOffset.width, y: dragOffset.height * 0.3)
                 .rotationEffect(.degrees(Double(dragOffset.width / 20)))
                 .gesture(
@@ -121,6 +124,7 @@ struct HelpDeckSwipeView: View {
                 )
         }
         .padding(.horizontal, 20)
+        .padding(.bottom, 12)
     }
 
     private var rightSwipeOverlayOpacity: Double {
@@ -137,7 +141,7 @@ struct HelpDeckSwipeView: View {
 
     // MARK: - Card Content
 
-    private func helpCardView(card: HelpCard) -> some View {
+    private func helpCardView(card: HelpCard, maxHeight: CGFloat = 400) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             // Skill badge
             let skill = HelpCardSkill(rawValue: card.skill) ?? .other
@@ -198,7 +202,7 @@ struct HelpDeckSwipeView: View {
             }
         }
         .padding(24)
-        .frame(maxWidth: .infinity, minHeight: 420)
+        .frame(maxWidth: .infinity, minHeight: 280, maxHeight: maxHeight)
         .background(Color.white)
         .cornerRadius(20)
         .shadow(color: .black.opacity(0.1), radius: 16, y: 8)

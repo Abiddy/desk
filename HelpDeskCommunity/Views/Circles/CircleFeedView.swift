@@ -421,8 +421,12 @@ struct FeedDecksToggle: View {
             toggleOption(title: "Decks", tag: 1)
         }
         .padding(4)
-        .background(Color.black)
+        .background(Color(.systemGray6))
         .cornerRadius(999)
+        .overlay(
+            RoundedRectangle(cornerRadius: 999)
+                .stroke(Color(.systemGray4), lineWidth: 1)
+        )
     }
 
     private func toggleOption(title: String, tag: Int) -> some View {
@@ -437,11 +441,11 @@ struct FeedDecksToggle: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
                 .background(selectedTab == tag ? Color.white : Color.clear)
-                .foregroundColor(selectedTab == tag ? .black : .white)
+                .foregroundColor(selectedTab == tag ? .primary : .secondary)
                 .cornerRadius(999)
                 .overlay(
                     RoundedRectangle(cornerRadius: 999)
-                        .stroke(selectedTab == tag ? Color.black : Color.clear, lineWidth: 1)
+                        .stroke(selectedTab == tag ? Color(.systemGray4) : Color.clear, lineWidth: 1)
                 )
         }
         .buttonStyle(.plain)

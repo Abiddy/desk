@@ -47,14 +47,21 @@ struct AuthenticationView: View {
             Spacer()
 
             // Branding
-            VStack(spacing: 8) {
-                Text("HelpDesk")
-                    .font(.system(size: 38, weight: .bold, design: .rounded))
-                    .foregroundColor(.black)
+            VStack(spacing: 16) {
+                Image("LandingLogo", bundle: .module)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 100, height: 100)
 
-                Text("Help People in Your Community")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                VStack(spacing: 8) {
+                    Text("HelpDesk")
+                        .font(.system(size: 38, weight: .bold, design: .rounded))
+                        .foregroundColor(.black)
+
+                    Text("Help People in Your Community")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
             }
             .padding(.bottom, 32)
 
@@ -64,7 +71,7 @@ struct AuthenticationView: View {
                     showSignUp = true
                 } label: {
                     Text("Get Started")
-                        .fontWeight(.semibold)
+                        .font(.system(size: 16, weight: .bold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(Color.blue)
@@ -92,7 +99,7 @@ struct AuthenticationView: View {
                 Text("Privacy Policy")
                     .underline()
             }
-            .font(.caption)
+            .font(.system(size: 12, weight: .medium))
             .foregroundColor(.secondary)
             .padding(.top, 16)
             .padding(.bottom, 32)
