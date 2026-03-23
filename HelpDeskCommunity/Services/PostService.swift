@@ -77,6 +77,16 @@ class PostService: ObservableObject {
         }
     }
 
+    /// Fetches posts from all circles for the Explore page (algorithm: recent first).
+    func fetchExplorePosts(limit: Int = 100) async throws -> [Post] {
+        let snapshot = try await postsCollection
+            .order(by: "timestamp", descending: true)
+            .limit(to: limit)
+            .getDocuments()
+
+        return snapshot.documents.compactMap { postFromDocument($0) }
+    }
+
     func fetchCirclePosts(circleName: String, limit: Int = 50) async throws -> [Post] {
         let snapshot = try await postsCollection
             .whereField("circleName", isEqualTo: circleName)

@@ -32,6 +32,20 @@ class FeedViewModel: ObservableObject {
         isLoading = false
     }
 
+    func loadExploreFeed() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            posts = try await postService.fetchExplorePosts()
+        } catch {
+            errorMessage = error.localizedDescription
+            #if DEBUG
+            print("[FeedViewModel] loadExploreFeed error: \(error)")
+            #endif
+        }
+        isLoading = false
+    }
+
     func loadCircleFeed(circleName: String) async {
         isLoading = true
         errorMessage = nil

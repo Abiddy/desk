@@ -21,7 +21,7 @@ struct MainTabView: View {
     private var mainContent: some View {
         switch selectedTab {
         case 0: HomeView()
-        case 1: CirclesListView()
+        case 1: ExploreView()
         case 2: HelpDeckSwipeView()
         case 3: ChatsView()
         case 4: ProfileView()

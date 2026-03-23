@@ -132,6 +132,19 @@ service cloud.firestore {
       allow read, write: if request.auth != null && 
         request.auth.uid in resource.data.participants;
     }
+
+    // Message requests (offer to help)
+    match /messageRequests/{requestId} {
+      allow create: if request.auth != null;
+      allow read, update: if request.auth != null && 
+        (resource.data.requesterId == request.auth.uid || resource.data.recipientId == request.auth.uid);
+    }
+
+    // Notifications
+    match /notifications/{notifId} {
+      allow read, update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null;
+    }
   }
 }
 ```
