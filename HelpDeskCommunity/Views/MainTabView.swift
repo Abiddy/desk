@@ -81,18 +81,20 @@ struct ModularTabBar: View {
         Button {
             onCreateTap?()
         } label: {
-            ZStack {
-                SwiftUI.Circle()
-                    .fill(Color.blue)
-                    .frame(width: 46, height: 46)
-                Image(systemName: "megaphone.fill")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-            .frame(maxWidth: .infinity)
+            Text("Make A Post")
+                .font(.system(size: 10, weight: .semibold))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 46)
+                .padding(.horizontal, 4)
+                .background(Color.blue)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Create post")
+        .accessibilityLabel("Make a post")
     }
 
     private func tabButton(tab: (icon: String, tag: Int)) -> some View {
