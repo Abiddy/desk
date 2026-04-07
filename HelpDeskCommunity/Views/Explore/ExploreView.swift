@@ -88,7 +88,7 @@ struct ExploreView: View {
             .navigationBarTitleDisplayMode(.inline)
             .refreshable { await loadAll() }
             .task { await loadAll() }
-            .sheet(isPresented: $showAllGroups) {
+            .fullScreenCover(isPresented: $showAllGroups) {
                 AllGroupsSheet(
                     promotedCircles: promotedCircles,
                     myCircles: myCircles,
@@ -197,7 +197,6 @@ struct AllGroupsSheet: View {
                                         CircleRowView(circle: circle, isPromoted: true)
                                     }
                                     .buttonStyle(.plain)
-                                    .simultaneousGesture(TapGesture().onEnded { dismiss() })
                                 }
                             }
                         }
@@ -210,7 +209,6 @@ struct AllGroupsSheet: View {
                                         CircleRowView(circle: circle, isPromoted: false)
                                     }
                                     .buttonStyle(.plain)
-                                    .simultaneousGesture(TapGesture().onEnded { dismiss() })
                                 }
                             }
                         }
@@ -223,7 +221,6 @@ struct AllGroupsSheet: View {
                                         CircleRowView(circle: circle, isPromoted: false)
                                     }
                                     .buttonStyle(.plain)
-                                    .simultaneousGesture(TapGesture().onEnded { dismiss() })
                                 }
                             }
                         }

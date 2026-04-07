@@ -7,25 +7,38 @@ import SwiftUI
 
 struct MainTabView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var feedViewModel: FeedViewModel
     @State private var selectedTab = 0
+    @State private var showCreatePostFullScreen = false
+    @State private var showChats = false
 
     var body: some View {
         mainContent
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .safeAreaInset(edge: .bottom) {
-                ModularTabBar(selectedTab: $selectedTab)
+                ModularTabBar(selectedTab: $selectedTab, onCreateTap: {
+                    showCreatePostFullScreen = true
+                })
+            }
+            .fullScreenCover(isPresented: $showCreatePostFullScreen) {
+                CreatePostFullPageView()
+                    .environmentObject(feedViewModel)
+                    .environmentObject(authViewModel)
+            }
+            .sheet(isPresented: $showChats) {
+                ChatsView()
             }
     }
 
     @ViewBuilder
     private var mainContent: some View {
         switch selectedTab {
-        case 0: HomeView()
+        case 0: HomeView(showChats: $showChats)
         case 1: ExploreView()
-        case 2: HelpDeckSwipeView()
-        case 3: ChatsView()
-        case 4: ProfileView()
-        default: HomeView()
+        case 2: EmptyView()
+        case 3: HelpDeckSwipeView()
+        case 4: ProfileView(showChats: $showChats)
+        default: HomeView(showChats: $showChats)
         }
     }
 }
@@ -34,19 +47,24 @@ struct MainTabView: View {
 
 struct ModularTabBar: View {
     @Binding var selectedTab: Int
+    var onCreateTap: (() -> Void)? = nil
 
-    private let tabs: [(icon: String, tag: Int)] = [
-        ("HomeIcon", 0),
-        ("SearchIcon", 1),
-        ("CardsIcon", 2),
-        ("MessageIcon", 3),
-        ("ProfileIcon", 4)
+    private let tabs: [(icon: String, tag: Int, isCreate: Bool)] = [
+        ("HomeIcon", 0, false),
+        ("SearchIcon", 1, false),
+        ("", 2, true),
+        ("CardsIcon", 3, false),
+        ("ProfileIcon", 4, false),
     ]
 
     var body: some View {
         HStack(spacing: 0) {
             ForEach(tabs, id: \.tag) { tab in
-                tabButton(tab: tab)
+                if tab.isCreate {
+                    createTabButton
+                } else {
+                    tabButton(tab: (icon: tab.icon, tag: tab.tag))
+                }
             }
         }
         .padding(.horizontal, 28)
@@ -57,6 +75,24 @@ struct ModularTabBar: View {
                 .fill(Color(.separator).opacity(0.3))
                 .frame(height: 0.5)
         }
+    }
+
+    private var createTabButton: some View {
+        Button {
+            onCreateTap?()
+        } label: {
+            ZStack {
+                SwiftUI.Circle()
+                    .fill(Color.blue)
+                    .frame(width: 46, height: 46)
+                Image(systemName: "megaphone.fill")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Create post")
     }
 
     private func tabButton(tab: (icon: String, tag: Int)) -> some View {
@@ -80,6 +116,7 @@ struct ModularTabBar: View {
 // MARK: - Home Tab
 
 struct HomeView: View {
+    @Binding var showChats: Bool
     @EnvironmentObject var joinedCirclesStore: JoinedCirclesStore
     @EnvironmentObject var feedViewModel: FeedViewModel
     @EnvironmentObject var followService: FollowService
@@ -131,7 +168,15 @@ struct HomeView: View {
             .navigationTitle("Helpdesk")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button { showChats = true } label: {
+                        Image("MessageIcon", bundle: .module)
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 22, height: 22)
+                            .foregroundColor(.primary)
+                    }
                     Button { /* Notifications - next iteration */ } label: {
                         Image("BellIcon", bundle: .module)
                             .renderingMode(.template)
@@ -182,6 +227,7 @@ struct ChatsView: View {
 // MARK: - Profile Tab
 
 struct ProfileView: View {
+    @Binding var showChats: Bool
     @EnvironmentObject var authViewModel: AuthViewModel
     @EnvironmentObject var locationService: LocationService
     @State private var isSeedingData = false
@@ -321,7 +367,15 @@ struct ProfileView: View {
             .background(Color(.systemBackground))
             .navigationTitle("Profile")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button { showChats = true } label: {
+                        Image("MessageIcon", bundle: .module)
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 22, height: 22)
+                            .foregroundColor(.primary)
+                    }
                     Button { /* Notifications - next iteration */ } label: {
                         Image("BellIcon", bundle: .module)
                             .renderingMode(.template)

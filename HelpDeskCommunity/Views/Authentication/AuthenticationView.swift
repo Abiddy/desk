@@ -10,60 +10,23 @@ struct AuthenticationView: View {
     @State private var showSignUp = false
     @State private var showSignUpFromSignIn = false
 
-    private let gridIcons: [(String, Color)] = [
-        ("hands.sparkles.fill", .blue),
-        ("heart.circle.fill", .pink),
-        ("person.3.fill", .blue),
-        ("lightbulb.fill", .yellow),
-        ("graduationcap.fill", .green),
-        ("stethoscope", .red),
-        ("briefcase.fill", .orange),
-        ("wrench.and.screwdriver.fill", .teal),
-        ("car.fill", .indigo),
-        ("book.fill", .mint),
-        ("house.fill", .brown),
-        ("globe.americas.fill", .cyan),
-    ]
-
     var body: some View {
         NavigationStack {
         VStack(spacing: 0) {
-            // Colorful icon grid
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
-                ForEach(0..<12, id: \.self) { i in
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(gridIcons[i].1.opacity(0.15))
-                        .frame(height: 80)
-                        .overlay(
-                            Image(systemName: gridIcons[i].0)
-                                .font(.title)
-                                .foregroundColor(gridIcons[i].1)
-                        )
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 60)
+            // Circular path + drifting icons around hero
+            LandingOrbitHeroView()
+                .frame(maxWidth: 340)
+                .frame(height: 340)
+                .padding(.top, 36)
+                .padding(.horizontal, 20)
 
-            Spacer()
+            Spacer(minLength: 8)
 
-            // Branding
-            VStack(spacing: 16) {
-                Image("LandingLogo", bundle: .module)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 100, height: 100)
-
-                VStack(spacing: 8) {
-                    Text("HelpDesk")
-                        .font(.system(size: 38, weight: .bold, design: .rounded))
-                        .foregroundColor(.black)
-
-                    Text("Help People in Your Community")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-            }
-            .padding(.bottom, 32)
+            // Brand title under hero
+            Text("HelpDesk")
+                .font(.system(size: 38, weight: .bold, design: .rounded))
+                .foregroundColor(.black)
+                .padding(.bottom, 8)
 
             // Buttons
             VStack(spacing: 12) {

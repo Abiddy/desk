@@ -13,8 +13,6 @@ struct CircleFeedView: View {
     @EnvironmentObject var joinedCirclesStore: JoinedCirclesStore
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTab = 0
-    @State private var showCreatePost = false
-    @State private var showCreateCard = false
     @State private var deckCards: [HelpCard] = []
     @State private var isDeckLoading = true
     @State private var deckCurrentIndex = 0
@@ -24,20 +22,14 @@ struct CircleFeedView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Feed / Decks toggle (Speak/Listen style)
-            FeedDecksToggle(selectedTab: $selectedTab)
-                .padding(.horizontal)
-                .padding(.top, 8)
-                .padding(.bottom, 8)
-
-            // Tab content
+        Group {
             if selectedTab == 0 {
                 feedTab
             } else {
                 decksTab
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("")
@@ -61,6 +53,13 @@ struct CircleFeedView: View {
                 }
             }
             ToolbarItemGroup(placement: .topBarTrailing) {
+                Picker("", selection: $selectedTab) {
+                    Text("Feed").tag(0)
+                    Text("Decks").tag(1)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 128)
+
                 Button {
                     joinedCirclesStore.toggle(circle.name)
                 } label: {
@@ -73,17 +72,7 @@ struct CircleFeedView: View {
                         .foregroundColor(isJoined ? .primary : .white)
                         .cornerRadius(16)
                 }
-                Button { showCreateCard = true } label: {
-                    Image(systemName: "hand.raised.fill")
-                        .foregroundColor(.green)
-                }
             }
-        }
-        .sheet(isPresented: $showCreatePost) {
-            CreatePostView(preselectedCircle: CircleCategory(rawValue: circle.name))
-        }
-        .sheet(isPresented: $showCreateCard) {
-            CreateHelpCardView(helpCardService: helpCardService, circleId: circle.id)
         }
         .task {
             await feedViewModel.loadCircleFeed(circleName: circle.name)
@@ -407,47 +396,5 @@ struct CircleFeedView: View {
             #endif
         }
         isDeckLoading = false
-    }
-}
-
-// MARK: - Feed / Decks Toggle (Speak/Listen style)
-
-struct FeedDecksToggle: View {
-    @Binding var selectedTab: Int
-
-    var body: some View {
-        HStack(spacing: 0) {
-            toggleOption(title: "Feed", tag: 0)
-            toggleOption(title: "Decks", tag: 1)
-        }
-        .padding(4)
-        .background(Color(.systemGray6))
-        .cornerRadius(999)
-        .overlay(
-            RoundedRectangle(cornerRadius: 999)
-                .stroke(Color(.systemGray4), lineWidth: 1)
-        )
-    }
-
-    private func toggleOption(title: String, tag: Int) -> some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                selectedTab = tag
-            }
-        } label: {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(selectedTab == tag ? Color.white : Color.clear)
-                .foregroundColor(selectedTab == tag ? .primary : .secondary)
-                .cornerRadius(999)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 999)
-                        .stroke(selectedTab == tag ? Color(.systemGray4) : Color.clear, lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
     }
 }
